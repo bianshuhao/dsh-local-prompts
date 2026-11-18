@@ -6,6 +6,40 @@ Repository: https://github.com/bianshuhao/dsh-local-prompts
 
 A local Markdown prompt library inside DeepSeek Harness. Local folders become categories; each prompt is a `.md` file on disk.
 
+## Screenshots
+
+> Windows usernames and local paths in these screenshots have been redacted.
+
+### Local folder
+
+![Local folder](docs/screenshots/01-local-folder.png)
+
+Current folder, connection state, counts, and an editable path with a Switch folder action.
+
+### Rich text editor
+
+![Rich editor](docs/screenshots/02-rich-editor.png)
+
+Title is the filename; source / rich text / preview modes, references, images, and auto-save.
+
+### Prompt list
+
+![Prompt list](docs/screenshots/03-prompt-list.png)
+
+Local folders on the left; search, sort, create, and open prompts on the right.
+
+### @ mention in chat
+
+![@ mention](docs/screenshots/04-at-mention.png)
+
+Type `@`, then a Local prompts group appears; keep typing to search.
+
+### The model reads a prompt
+
+![Agent reads prompt](docs/screenshots/05-agent-read.png)
+
+The selected prompt becomes an absolute-path mention that the model can read with its `read` tool.
+
 ## Install
 
 This is a DSH bundle. Install the directory/repository through the DSH plugin manager, then **restart DeepSeek Harness**. Refreshing the page is not enough because the Host-side Node module must reload.

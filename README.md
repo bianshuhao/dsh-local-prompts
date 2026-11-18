@@ -6,6 +6,40 @@
 
 在 DeepSeek Harness 的 Web 主面板中直接读写本地 Markdown 目录。目录即分类，文件即提示词。
 
+## 截图
+
+> 截图中的 Windows 用户名和本地路径已做脱敏处理。
+
+### 本地目录与切换
+
+![本地目录](docs/screenshots/01-local-folder.png)
+
+显示当前目录、连接状态、提示词/目录/回收站统计；路径可直接修改并切换。
+
+### 富文本编辑
+
+![富文本编辑](docs/screenshots/02-rich-editor.png)
+
+标题即文件名，目录可切换；支持原文本 / 富文本 / 预览，以及引用、图片和自动保存。
+
+### 提示词列表
+
+![提示词列表](docs/screenshots/03-prompt-list.png)
+
+左侧目录来自本地文件夹，右侧搜索、排序、新建和打开提示词。
+
+### 对话中 @ 提示词
+
+![@ 提示词](docs/screenshots/04-at-mention.png)
+
+在输入框输入 `@`，出现「本地提示词」分组；继续输入名称即可边打边搜。
+
+### 模型读取提示词
+
+![模型读取提示词](docs/screenshots/05-agent-read.png)
+
+选中后插入绝对路径 mention，模型可以用 `read` 读取对应的 Markdown 文件。
+
 ## 安装
 
 本插件是一个 DSH bundle。推荐通过 DSH 的插件管理器安装本目录/仓库；安装完成后必须重启 DeepSeek Harness（只刷新页面不会重新加载 Host 端 Node 模块）。
