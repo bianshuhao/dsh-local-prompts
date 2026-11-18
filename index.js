@@ -28,7 +28,7 @@ export function apply(ctx) {
   let disposed = false
   let handle = null
 
-  startDocsServer({ root: resolveDocsRoot(), port: LOCAL_DOCS_PORT })
+  startDocsServer({ root: resolveDocsRoot(), port: LOCAL_DOCS_PORT, configPath: path.join(pluginDir, 'local.config.json') })
     .then((server) => {
       if (disposed || current !== generation) {
         void server.close()

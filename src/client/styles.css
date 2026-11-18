@@ -2744,3 +2744,33 @@
   color: var(--ld-danger);
   font-size: 9.5px;
 }
+
+.ld-root .ld-path-input {
+  display: block;
+  width: 100%;
+  height: 34px;
+  margin: 5px 0 0;
+  padding: 0 10px;
+  border: 1px solid var(--ld-border);
+  border-radius: 7px;
+  outline: none;
+  background: var(--ld-surface-soft);
+  color: var(--ld-text);
+  font-family: var(--ld-font-mono);
+  font-size: 10px;
+}
+
+.ld-root .ld-path-input:focus {
+  border-color: var(--ld-primary);
+  background: var(--ld-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ld-primary) 10%, transparent);
+}
+
+.ld-root .ld-path-input.has-error {
+  border-color: var(--ld-danger);
+}
+
+.ld-root .ld-dir-hint {
+  margin-top: 4px;
+  font-size: 9.5px;
+}

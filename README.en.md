@@ -18,7 +18,7 @@ Package name: `@bianshuhao/dsh-local-prompts`.
 ~/Documents/DSH Prompts
 ```
 
-It is created automatically on first start. Root priority:
+It is created automatically on first start. You can also edit the path in the Local folder dialog and click Switch folder; the change applies immediately and is written to `local.config.json`. Root priority:
 
 1. `LOCAL_DOCS_ROOT` environment variable
 2. `local.config.json` next to the plugin

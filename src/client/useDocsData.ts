@@ -153,6 +153,11 @@ export function useDocsData() {
     [reload],
   )
 
+  const updateRoot = useCallback(
+    (nextRoot: string) => mutate('/docs/config', 'PUT', { root: nextRoot }),
+    [mutate],
+  )
+
   const restorePrompt = useCallback(
     (filePath: string) => mutate('/docs/restore', 'POST', { path: filePath }),
     [mutate],
@@ -164,7 +169,7 @@ export function useDocsData() {
   const emptyTrash = useCallback(() => mutate('/docs/empty-trash', 'POST', {}), [mutate])
 
   return {
-    workspace, trash, assets, root, status, error, reload, uploadAsset,
+    workspace, trash, assets, root, status, error, reload, uploadAsset, updateRoot,
     createPrompt, updatePrompt, trashPrompt, restorePrompt, purgePrompt, emptyTrash,
   }
 }

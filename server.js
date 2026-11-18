@@ -509,7 +509,8 @@ export async function startDocsServer(options = {}) {
   const requestedRoot = String(options.root ?? process.env.LOCAL_DOCS_ROOT ?? DEFAULT_DOCS_ROOT).trim() || DEFAULT_DOCS_ROOT
   const requestedAbsolute = path.resolve(requestedRoot)
   await fs.mkdir(requestedAbsolute, { recursive: true, mode: 0o755 })
-  const root = await fs.realpath(requestedAbsolute)
+  let root = await fs.realpath(requestedAbsolute)
+  const configPath = options.configPath ? path.resolve(String(options.configPath)) : null
   const port = Number(options.port ?? LOCAL_DOCS_PORT)
   let boundPort = port
   const clients = new Set()
@@ -540,6 +541,37 @@ export async function startDocsServer(options = {}) {
   }
 
   ensureWatcher()
+
+  function expandRoot(value) {
+    let raw = String(value ?? '').trim()
+    if (!raw) throw new ApiError(400, '目录不能为空')
+    if (raw === '~') raw = homedir()
+    else if (raw.startsWith('~/')) raw = path.join(homedir(), raw.slice(2))
+    return path.resolve(raw)
+  }
+
+  async function switchRoot(value) {
+    const requested = expandRoot(value)
+    await fs.mkdir(requested, { recursive: true, mode: 0o755 })
+    const nextRoot = await fs.realpath(requested)
+    const stat = await fs.stat(nextRoot)
+    if (!stat.isDirectory()) throw new ApiError(400, '不是目录')
+    if (nextRoot === root) return buildSnapshot(root)
+
+    if (configPath) {
+      await fs.mkdir(path.dirname(configPath), { recursive: true })
+      await fs.writeFile(configPath, `${JSON.stringify({ root: nextRoot }, null, 2)}\n`, 'utf8')
+    }
+
+    if (watcher) {
+      try { watcher.close() } catch {}
+      watcher = null
+    }
+    root = nextRoot
+    ensureWatcher()
+    broadcastChange()
+    return buildSnapshot(root)
+  }
 
   async function handle(request, response) {
     applyCors(request, response)
@@ -624,6 +656,10 @@ export async function startDocsServer(options = {}) {
       sendJson(response, 201, { asset })
       return
     }
+    if (url.pathname === '/api/docs/config' && method === 'PUT') {
+      sendJson(response, 200, await switchRoot((await readJson(request)).root))
+      return
+    }
     if (url.pathname === '/api/docs/file' && method === 'POST') {
       sendJson(response, 201, await createFile(root, await readJson(request)))
       return
@@ -675,6 +711,7 @@ export async function startDocsServer(options = {}) {
   return {
     root,
     port: actualPort,
+    setRoot: switchRoot,
     close: async () => {
       for (const client of clients) {
         try { client.end() } catch {}

@@ -69,7 +69,7 @@ interface AppProps {
 
 export function LocalDocsApp({ t }: AppProps) {
   const {
-    workspace, trash, assets, root, status, error, reload, uploadAsset,
+    workspace, trash, assets, root, status, error, reload, uploadAsset, updateRoot,
     createPrompt, updatePrompt, trashPrompt, restorePrompt, purgePrompt, emptyTrash,
   } = useDocsData()
   const { prompts } = workspace
@@ -176,6 +176,17 @@ export function LocalDocsApp({ t }: AppProps) {
     },
     [],
   )
+
+  const changeRoot = useCallback(async (nextRoot: string) => {
+    try {
+      await updateRoot(nextRoot)
+      pushToast(tr(t, 'dirChanged', '已切换目录'))
+      return true
+    } catch (cause) {
+      pushToast(cause instanceof Error ? cause.message : '切换目录失败', 'error')
+      return false
+    }
+  }, [updateRoot, pushToast, t])
 
   useEffect(() => {
     const element = rootRef.current
@@ -755,6 +766,7 @@ export function LocalDocsApp({ t }: AppProps) {
           trashCount={trashCount}
           onClose={() => setLocalOpen(false)}
           onReload={() => void reload(true)}
+          onChangeRoot={changeRoot}
         />
       )}
 
@@ -1336,10 +1348,17 @@ interface LocalDialogProps {
   trashCount: number
   onClose: () => void
   onReload: () => void
+  onChangeRoot: (root: string) => Promise<boolean>
 }
 
-function LocalDialog({ t, root, status, error, categoryCount, promptCount, trashCount, onClose, onReload }: LocalDialogProps) {
+function LocalDialog({ t, root, status, error, categoryCount, promptCount, trashCount, onClose, onReload, onChangeRoot }: LocalDialogProps) {
   const closeRef = useRef<HTMLButtonElement>(null)
+  const [draftRoot, setDraftRoot] = useState(root)
+  const [changing, setChanging] = useState(false)
+  const [pathError, setPathError] = useState('')
+  useEffect(() => {
+    setDraftRoot(root)
+  }, [root])
   useEffect(() => {
     closeRef.current?.focus()
     const handleKey = (event: KeyboardEvent) => {
@@ -1351,6 +1370,16 @@ function LocalDialog({ t, root, status, error, categoryCount, promptCount, trash
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [onClose])
+
+  async function applyRoot() {
+    const next = draftRoot.trim()
+    if (!next || next === root || changing) return
+    setChanging(true)
+    setPathError('')
+    const ok = await onChangeRoot(next)
+    setChanging(false)
+    if (!ok) setPathError(tr(t, 'dirChangeFailed', '切换目录失败'))
+  }
 
   return (
     <div
@@ -1369,7 +1398,24 @@ function LocalDialog({ t, root, status, error, categoryCount, promptCount, trash
         </div>
         <div className="ld-dialog-body">
           <p className="ld-field-label">{tr(t, 'pathLabel', '提示词目录')}</p>
-          <code className="ld-path">{root || '—'}</code>
+          <input
+            className={`ld-path-input${pathError ? ' has-error' : ''}`}
+            value={draftRoot}
+            onChange={(event) => {
+              setDraftRoot(event.target.value)
+              if (pathError) setPathError('')
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && draftRoot.trim() && draftRoot.trim() !== root && !changing) {
+                event.preventDefault()
+                void applyRoot()
+              }
+            }}
+            placeholder={tr(t, 'rootPlaceholder', '~/Documents/DSH Prompts')}
+            spellCheck={false}
+            disabled={changing}
+            aria-label={tr(t, 'pathLabel', '提示词目录')}
+          />
           <div className={`ld-local-status is-${status}`}>
             <span className="ld-status-dot" />
             {status === 'loading'
@@ -1387,13 +1433,25 @@ function LocalDialog({ t, root, status, error, categoryCount, promptCount, trash
           <p className="ld-note">
             {tr(t, 'localNote', '左侧目录由本地文件夹自动生成。本地新增文件夹后，刷新或等待自动同步即可。保存会直接写回原文件。')}
           </p>
+          <p className="ld-note ld-dir-hint">
+            {tr(t, 'dirConfigHint', '切换会立即生效并写入 local.config.json；如果设置了 LOCAL_DOCS_ROOT，环境变量优先。')}
+          </p>
+          {pathError && <p className="ld-error-text">{pathError}</p>}
         </div>
         <div className="ld-dialog-foot">
-          <button type="button" className="ld-btn secondary" onClick={onReload}>
+          <button type="button" className="ld-btn secondary" onClick={onReload} disabled={changing}>
             <RefreshIcon size={14} />
             {tr(t, 'refresh', '重新读取')}
           </button>
-          <button type="button" className="ld-btn primary" onClick={onClose}>
+          <button
+            type="button"
+            className="ld-btn primary"
+            onClick={() => void applyRoot()}
+            disabled={changing || !draftRoot.trim() || draftRoot.trim() === root}
+          >
+            {changing ? tr(t, 'switching', '切换中…') : tr(t, 'switchDir', '切换目录')}
+          </button>
+          <button type="button" className="ld-btn secondary" onClick={onClose} disabled={changing}>
             {tr(t, 'done', '完成')}
           </button>
         </div>

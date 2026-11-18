@@ -1,15 +1,17 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, realpath, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, realpath, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { startDocsServer } from '../server.js'
 
 const root = await mkdtemp(join(tmpdir(), 'dsh-local-prompts-smoke-'))
+const altRoot = await mkdtemp(join(tmpdir(), 'dsh-local-prompts-alt-'))
+const configPath = join(root, 'local.config.json')
 const headers = { Origin: 'dsh-app://desktop', 'Content-Type': 'application/json' }
 let server
 
 try {
-  server = await startDocsServer({ root, port: 0 })
+  server = await startDocsServer({ root, port: 0, configPath })
   const base = `http://127.0.0.1:${server.port}/api/docs`
 
   let response = await fetch(base)
@@ -84,8 +86,21 @@ try {
   assert.equal(snapshot.trash.length, 0)
   assert.equal(snapshot.prompts.length, 1)
 
+  response = await fetch(`${base}/config`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ root: altRoot }),
+  })
+  assert.equal(response.status, 200)
+  snapshot = await response.json()
+  assert.equal(snapshot.root, await realpath(altRoot))
+  assert.equal(snapshot.prompts.length, 0)
+  const savedConfig = JSON.parse(await readFile(configPath, 'utf8'))
+  assert.equal(savedConfig.root, await realpath(altRoot))
+
   console.log('smoke test passed')
 } finally {
   if (server) await server.close()
   await rm(root, { recursive: true, force: true })
+  await rm(altRoot, { recursive: true, force: true })
 }

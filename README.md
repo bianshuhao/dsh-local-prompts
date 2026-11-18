@@ -28,7 +28,7 @@
 ~/Documents/DSH Prompts
 ```
 
-首次启动会自动创建。目录优先级：`LOCAL_DOCS_ROOT` 环境变量 > 插件目录下的 `local.config.json` > 默认目录。
+首次启动会自动创建。你也可以在「本地目录」弹窗中直接修改路径并点「切换目录」，会立即生效并写入 `local.config.json`。目录优先级：`LOCAL_DOCS_ROOT` 环境变量 > `local.config.json` > 默认目录。
 
 `local.config.json` 示例：
 
