@@ -10,7 +10,7 @@ A local Markdown prompt library inside DeepSeek Harness. Local folders become ca
 
 This is a DSH bundle. Install the directory/repository through the DSH plugin manager, then **restart DeepSeek Harness**. Refreshing the page is not enough because the Host-side Node module must reload.
 
-Package name: `dsh-local-prompts`.
+Package name: `@bianshuhao/dsh-local-prompts`.
 
 ## Default folder
 

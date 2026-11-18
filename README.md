@@ -16,7 +16,7 @@
 2. 在 DSH profile 中把它作为 bundle 加入（通过插件管理器，或 profile 的 `bundles`/`dependencies`）
 3. 重启 DeepSeek Harness，在左侧打开「提示词」
 
-包名：`dsh-local-prompts`。
+包名：`@bianshuhao/dsh-local-prompts`。
 
 ## 启动
 

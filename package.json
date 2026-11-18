@@ -1,5 +1,5 @@
 {
-  "name": "dsh-local-prompts",
+  "name": "@bianshuhao/dsh-local-prompts",
   "version": "1.0.0",
   "type": "module",
   "description": "A local Markdown prompt panel for DeepSeek Harness, backed by a local folder.",
@@ -81,5 +81,8 @@
   "homepage": "https://github.com/bianshuhao/dsh-local-prompts#readme",
   "bugs": {
     "url": "https://github.com/bianshuhao/dsh-local-prompts/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
