@@ -1,0 +1,3 @@
+- insert:
+    - id: local-docs
+      name: 'dsh-local-prompts'

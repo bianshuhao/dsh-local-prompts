@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "提示词",
+    "description": "在 DeepSeek 主面板中直接浏览、新建、编辑和读写本地 Markdown 提示词目录；目录即分类。",
+    "detail": "docs/DETAIL.md"
+  }
+}
