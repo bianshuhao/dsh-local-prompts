@@ -38,6 +38,7 @@ type Translate = (key: string) => string
 type View = 'all' | 'trash' | string
 type SortKey = 'updated' | 'created' | 'title'
 type EditorState = { mode: 'create' } | { mode: 'edit'; prompt: Prompt }
+type FolderDialogState = { mode: 'create' } | { mode: 'rename'; category: Category }
 
 const ROOT_CATEGORY_ID = 'dir:__root__'
 const ALL = 'all'
@@ -53,6 +54,10 @@ function joinCount(count: number, noun: string): string {
 }
 
 /** Keep the client's filename in sync with the server's title sanitizer. */
+function folderLeafName(category: Category): string {
+  return category.id.startsWith('dir:') ? (category.id.slice(4).split('/').pop() ?? '') : ''
+}
+
 function normalizeTitle(value: string): string {
   return value
     .replace(/\.(md|markdown|txt)$/i, '')
@@ -70,6 +75,7 @@ interface AppProps {
 export function LocalDocsApp({ t }: AppProps) {
   const {
     workspace, trash, assets, root, status, error, reload, uploadAsset, updateRoot,
+    createFolder, renameFolder, deleteFolder,
     createPrompt, updatePrompt, trashPrompt, restorePrompt, purgePrompt, emptyTrash,
   } = useDocsData()
   const { prompts } = workspace
@@ -84,6 +90,8 @@ export function LocalDocsApp({ t }: AppProps) {
   const [sort, setSort] = useState<SortKey>('updated')
   const [editing, setEditing] = useState<EditorState | null>(null)
   const [localOpen, setLocalOpen] = useState(false)
+  const [folderDialog, setFolderDialog] = useState<FolderDialogState | null>(null)
+  const [folderToDelete, setFolderToDelete] = useState<Category | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Prompt | null>(null)
   const [purgeTarget, setPurgeTarget] = useState<Prompt | null>(null)
   const [emptyOpen, setEmptyOpen] = useState(false)
@@ -187,6 +195,37 @@ export function LocalDocsApp({ t }: AppProps) {
       return false
     }
   }, [updateRoot, pushToast, t])
+
+  const saveFolder = useCallback(async (name: string) => {
+    if (!folderDialog) return false
+    try {
+      if (folderDialog.mode === 'create') {
+        await createFolder(name, ROOT_CATEGORY_ID)
+        pushToast(tr(t, 'folderCreated', '已新建目录'))
+      } else {
+        await renameFolder(folderDialog.category.id, name)
+        if (view === folderDialog.category.id) setView(ALL)
+        pushToast(tr(t, 'folderRenamed', '已重命名目录'))
+      }
+      setFolderDialog(null)
+      return true
+    } catch (cause) {
+      pushToast(cause instanceof Error ? cause.message : '目录操作失败', 'error')
+      return false
+    }
+  }, [createFolder, folderDialog, pushToast, renameFolder, t, view])
+
+  const removeFolder = useCallback(async () => {
+    if (!folderToDelete) return
+    try {
+      await deleteFolder(folderToDelete.id)
+      if (view === folderToDelete.id) setView(ALL)
+      setFolderToDelete(null)
+      pushToast(tr(t, 'folderDeleted', '已删除目录'))
+    } catch (cause) {
+      pushToast(cause instanceof Error ? cause.message : '删除目录失败', 'error')
+    }
+  }, [deleteFolder, folderToDelete, pushToast, t, view])
 
   useEffect(() => {
     const element = rootRef.current
@@ -414,15 +453,26 @@ export function LocalDocsApp({ t }: AppProps) {
 
             <div className="ld-rail-section">
               <span>{tr(t, 'directories', '目录')}</span>
-              <button
-                type="button"
-                className={`ld-icon-button${status === 'loading' ? ' is-spinning' : ''}`}
-                title={tr(t, 'refresh', '重新读取')}
-                aria-label={tr(t, 'refresh', '重新读取')}
-                onClick={() => void reload(true)}
-              >
-                <RefreshIcon size={14} />
-              </button>
+              <div className="ld-rail-head-actions">
+                <button
+                  type="button"
+                  className="ld-icon-button"
+                  title={tr(t, 'newFolder', '新建目录')}
+                  aria-label={tr(t, 'newFolder', '新建目录')}
+                  onClick={() => setFolderDialog({ mode: 'create' })}
+                >
+                  <PlusIcon size={14} />
+                </button>
+                <button
+                  type="button"
+                  className={`ld-icon-button${status === 'loading' ? ' is-spinning' : ''}`}
+                  title={tr(t, 'refresh', '重新读取')}
+                  aria-label={tr(t, 'refresh', '重新读取')}
+                  onClick={() => void reload(true)}
+                >
+                  <RefreshIcon size={14} />
+                </button>
+              </div>
             </div>
 
             <nav className="ld-nav-list">
@@ -437,17 +487,46 @@ export function LocalDocsApp({ t }: AppProps) {
               </button>
               <div className="ld-separator" />
               {categories.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  className={`ld-nav-item${view === category.id ? ' is-active' : ''}`}
-                  onClick={() => selectView(category.id)}
-                  title={category.name}
-                >
-                  <span className="ld-dot" style={{ background: category.color }} />
-                  <span className="ld-nav-label">{categoryLabel(category)}</span>
-                  <span className="ld-count">{counts[category.id] ?? 0}</span>
-                </button>
+                <div key={category.id} className={`ld-nav-row${view === category.id ? ' is-active' : ''}`}>
+                  <button
+                    type="button"
+                    className={`ld-nav-item${view === category.id ? ' is-active' : ''}`}
+                    onClick={() => selectView(category.id)}
+                    title={category.name}
+                  >
+                    <span className="ld-dot" style={{ background: category.color }} />
+                    <span className="ld-nav-label">{categoryLabel(category)}</span>
+                    <span className="ld-count">{counts[category.id] ?? 0}</span>
+                  </button>
+                  {category.id !== ROOT_CATEGORY_ID && (
+                    <span className="ld-nav-actions">
+                      <button
+                        type="button"
+                        className="ld-nav-action"
+                        title={tr(t, 'renameFolder', '重命名目录')}
+                        aria-label={tr(t, 'renameFolder', '重命名目录')}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          setFolderDialog({ mode: 'rename', category })
+                        }}
+                      >
+                        <PencilIcon size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        className="ld-nav-action danger"
+                        title={tr(t, 'deleteFolderTitle', '删除目录')}
+                        aria-label={tr(t, 'deleteFolderTitle', '删除目录')}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          setFolderToDelete(category)
+                        }}
+                      >
+                        <TrashIcon size={13} />
+                      </button>
+                    </span>
+                  )}
+                </div>
               ))}
             </nav>
 
@@ -767,6 +846,28 @@ export function LocalDocsApp({ t }: AppProps) {
           onClose={() => setLocalOpen(false)}
           onReload={() => void reload(true)}
           onChangeRoot={changeRoot}
+        />
+      )}
+
+      {folderDialog && (
+        <FolderDialog
+          t={t}
+          mode={folderDialog.mode}
+          initialName={folderDialog.mode === 'rename' ? folderLeafName(folderDialog.category) : ''}
+          onSave={saveFolder}
+          onClose={() => setFolderDialog(null)}
+        />
+      )}
+
+      {folderToDelete && (
+        <ConfirmDialog
+          t={t}
+          title={tr(t, 'deleteFolderTitle', '删除目录')}
+          message={<>{tr(t, 'deleteFolderBody', '只能删除空目录，目录内的提示词需要先移走。')}<strong>{folderToDelete.name}</strong></>}
+          confirmLabel={tr(t, 'deleteFolder', '删除目录')}
+          danger
+          onConfirm={() => void removeFolder()}
+          onCancel={() => setFolderToDelete(null)}
         />
       )}
 
@@ -1453,6 +1554,114 @@ function LocalDialog({ t, root, status, error, categoryCount, promptCount, trash
           </button>
           <button type="button" className="ld-btn secondary" onClick={onClose} disabled={changing}>
             {tr(t, 'done', '完成')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface FolderDialogProps {
+  t: Translate
+  mode: 'create' | 'rename'
+  initialName: string
+  onSave: (name: string) => Promise<boolean>
+  onClose: () => void
+}
+
+function FolderDialog({ t, mode, initialName, onSave, onClose }: FolderDialogProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [name, setName] = useState(initialName)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    inputRef.current?.focus()
+    inputRef.current?.select()
+  }, [])
+
+  useEffect(() => {
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation()
+        if (!saving) onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onClose, saving])
+
+  const submit = async () => {
+    if (saving) return
+    const value = name.trim()
+    if (!value) {
+      setError(tr(t, 'folderNameRequired', '请输入目录名'))
+      inputRef.current?.focus()
+      return
+    }
+    setSaving(true)
+    setError('')
+    const ok = await onSave(value)
+    setSaving(false)
+    if (!ok) setError(tr(t, 'folderSaveFailed', '目录操作失败'))
+  }
+
+  return (
+    <div
+      className="ld-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label={mode === 'create' ? tr(t, 'newFolder', '新建目录') : tr(t, 'renameFolder', '重命名目录')}
+      onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) onClose() }}
+    >
+      <div className="ld-dialog ld-folder-dialog">
+        <div className="ld-dialog-head">
+          <span className="ld-dialog-title">
+            <FolderIcon size={17} />
+            {mode === 'create' ? tr(t, 'newFolder', '新建目录') : tr(t, 'renameFolder', '重命名目录')}
+          </span>
+          <button type="button" className="ld-icon-button" onClick={onClose} disabled={saving} aria-label={tr(t, 'close', '关闭')}>
+            <XIcon size={15} />
+          </button>
+        </div>
+        <div className="ld-dialog-body">
+          <label className="ld-field">
+            <span className="ld-field-label">{tr(t, 'folderName', '目录名')}</span>
+            <input
+              ref={inputRef}
+              className={error ? 'has-error' : ''}
+              value={name}
+              onChange={(event) => {
+                setName(event.target.value)
+                if (error) setError('')
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  void submit()
+                }
+              }}
+              placeholder={tr(t, 'folderNamePlaceholder', '例如：运维操作')}
+              disabled={saving}
+            />
+          </label>
+          {error && <p className="ld-error-text">{error}</p>}
+          <p className="ld-note">
+            {mode === 'create'
+              ? tr(t, 'newFolderHint', '会直接在提示词根目录下创建本地文件夹。')
+              : tr(t, 'renameFolderHint', '会重命名本地文件夹；里面的提示词会一起移动。')}
+          </p>
+        </div>
+        <div className="ld-dialog-foot">
+          <button type="button" className="ld-btn secondary" onClick={onClose} disabled={saving}>
+            {tr(t, 'cancel', '取消')}
+          </button>
+          <button type="button" className="ld-btn primary" onClick={() => void submit()} disabled={saving}>
+            {saving
+              ? tr(t, 'saving', '保存中…')
+              : mode === 'create'
+                ? tr(t, 'createFolder', '创建')
+                : tr(t, 'renameFolderAction', '重命名')}
           </button>
         </div>
       </div>

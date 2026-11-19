@@ -86,6 +86,58 @@ try {
   assert.equal(snapshot.trash.length, 0)
   assert.equal(snapshot.prompts.length, 1)
 
+  response = await fetch(`${base}/folder`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ name: 'Smoke folder', parentId: 'dir:__root__' }),
+  })
+  assert.equal(response.status, 201)
+  snapshot = await response.json()
+  let folder = snapshot.categories.find((category) => category.name === 'Smoke folder')
+  assert.ok(folder?.id)
+
+  response = await fetch(`${base}/folder`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ id: folder.id, name: 'Smoke folder renamed' }),
+  })
+  assert.equal(response.status, 200)
+  snapshot = await response.json()
+  folder = snapshot.categories.find((category) => category.name === 'Smoke folder renamed')
+  assert.ok(folder?.id)
+  assert.equal(snapshot.categories.some((category) => category.name === 'Smoke folder'), false)
+
+  response = await fetch(`${base}/folder`, {
+    method: 'DELETE',
+    headers,
+    body: JSON.stringify({ id: folder.id }),
+  })
+  assert.equal(response.status, 200)
+  snapshot = await response.json()
+  assert.equal(snapshot.categories.some((category) => category.name === 'Smoke folder renamed'), false)
+
+  response = await fetch(`${base}/folder`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ name: 'Nonempty folder', parentId: 'dir:__root__' }),
+  })
+  assert.equal(response.status, 201)
+  snapshot = await response.json()
+  folder = snapshot.categories.find((category) => category.name === 'Nonempty folder')
+  assert.ok(folder?.id)
+  response = await fetch(`${base}/file`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ title: 'Inside', content: 'x', categoryId: folder.id }),
+  })
+  assert.equal(response.status, 201)
+  response = await fetch(`${base}/folder`, {
+    method: 'DELETE',
+    headers,
+    body: JSON.stringify({ id: folder.id }),
+  })
+  assert.equal(response.status, 409)
+
   response = await fetch(`${base}/config`, {
     method: 'PUT',
     headers,

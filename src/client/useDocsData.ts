@@ -153,6 +153,19 @@ export function useDocsData() {
     [reload],
   )
 
+  const createFolder = useCallback(
+    (name: string, parentId: string) => mutate('/docs/folder', 'POST', { name, parentId }),
+    [mutate],
+  )
+  const renameFolder = useCallback(
+    (id: string, name: string) => mutate('/docs/folder', 'PUT', { id, name }),
+    [mutate],
+  )
+  const deleteFolder = useCallback(
+    (id: string) => mutate('/docs/folder', 'DELETE', { id }),
+    [mutate],
+  )
+
   const updateRoot = useCallback(
     (nextRoot: string) => mutate('/docs/config', 'PUT', { root: nextRoot }),
     [mutate],
@@ -170,6 +183,7 @@ export function useDocsData() {
 
   return {
     workspace, trash, assets, root, status, error, reload, uploadAsset, updateRoot,
+    createFolder, renameFolder, deleteFolder,
     createPrompt, updatePrompt, trashPrompt, restorePrompt, purgePrompt, emptyTrash,
   }
 }

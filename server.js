@@ -172,6 +172,92 @@ async function saveAsset(root, name, data) {
   }
 }
 
+function categoryRel(categoryId) {
+  if (typeof categoryId !== 'string' || !categoryId) throw new ApiError(400, '目录不能为空')
+  if (categoryId === ROOT_CATEGORY_ID) return ''
+  if (!categoryId.startsWith('dir:')) throw new ApiError(400, '目录不存在')
+  return normalizeRel(categoryId.slice(4))
+}
+
+function assertManageableCategory(rel) {
+  const normalized = normalizeRel(rel)
+  if (!normalized) throw new ApiError(400, '不能修改根目录')
+  const parts = normalized.split('/')
+  if (parts[0] === TRASH_DIR || parts[0] === ASSET_DIR) throw new ApiError(400, '不能修改保留目录')
+  if (normalized === '__root__' || parts.some((part) => part === 'node_modules' || !part || part.startsWith('.'))) {
+    throw new ApiError(400, '目录名无效')
+  }
+}
+
+function sanitizeFolderName(value) {
+  const name = String(value ?? '')
+    .replace(/[\\/:*?"<>|\u0000]/g, '-')
+    .replace(/\s+/g, ' ')
+    .replace(/^\.+/, '')
+    .trim()
+    .slice(0, 80)
+  if (!name) throw new ApiError(400, '目录名不能为空')
+  return name
+}
+
+async function directoryStat(root, rel) {
+  const absolute = resolveInside(root, rel)
+  await assertNoSymlinks(root, rel)
+  const stat = await fs.lstat(absolute)
+  if (!stat.isDirectory() || stat.isSymbolicLink()) throw new ApiError(400, '不是目录')
+  return { absolute, stat }
+}
+
+async function createFolder(root, payload) {
+  const parentRel = categoryRel(payload.parentId ?? ROOT_CATEGORY_ID)
+  if (parentRel) {
+    assertManageableCategory(parentRel)
+    await directoryStat(root, parentRel)
+  }
+  const name = sanitizeFolderName(payload.name)
+  const rel = parentRel ? `${parentRel}/${name}` : name
+  assertManageableCategory(rel)
+  const absolute = resolveInside(root, rel)
+  await assertNoSymlinks(root, rel)
+  if (await exists(absolute)) throw new ApiError(409, '同名目录已存在')
+  await fs.mkdir(absolute)
+  return buildSnapshot(root)
+}
+
+async function renameFolder(root, payload) {
+  const rel = categoryRel(payload.id)
+  assertManageableCategory(rel)
+  const oldInfo = await directoryStat(root, rel)
+  const name = sanitizeFolderName(payload.name)
+  const parent = rel.includes('/') ? rel.slice(0, rel.lastIndexOf('/')) : ''
+  const nextRel = parent ? `${parent}/${name}` : name
+  assertManageableCategory(nextRel)
+  await assertNoSymlinks(root, nextRel)
+  if (nextRel === rel) return buildSnapshot(root)
+  const caseOnly = rel.toLowerCase() === nextRel.toLowerCase()
+  if (!caseOnly && (await exists(resolveInside(root, nextRel)))) {
+    throw new ApiError(409, '同名目录已存在')
+  }
+  if (caseOnly) {
+    const temporary = `${oldInfo.absolute}.ld-rename-${Date.now()}`
+    await fs.rename(oldInfo.absolute, temporary)
+    await fs.rename(temporary, resolveInside(root, nextRel))
+  } else {
+    await fs.rename(oldInfo.absolute, resolveInside(root, nextRel))
+  }
+  return buildSnapshot(root)
+}
+
+async function deleteFolder(root, payload) {
+  const rel = categoryRel(payload.id)
+  assertManageableCategory(rel)
+  const info = await directoryStat(root, rel)
+  const entries = await fs.readdir(info.absolute)
+  if (entries.length > 0) throw new ApiError(409, '目录不为空，不能删除')
+  await fs.rmdir(info.absolute)
+  return buildSnapshot(root)
+}
+
 function sanitizeTitle(value) {
   if (typeof value !== 'string') throw new ApiError(400, '文件名不能为空')
   const title = value
@@ -500,7 +586,7 @@ function applyCors(request, response) {
     response.setHeader('Access-Control-Allow-Origin', origin)
     response.setHeader('Vary', 'Origin')
   }
-  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS')
+  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type')
   response.setHeader('Access-Control-Allow-Private-Network', 'true')
 }
@@ -658,6 +744,18 @@ export async function startDocsServer(options = {}) {
     }
     if (url.pathname === '/api/docs/config' && method === 'PUT') {
       sendJson(response, 200, await switchRoot((await readJson(request)).root))
+      return
+    }
+    if (url.pathname === '/api/docs/folder' && method === 'POST') {
+      sendJson(response, 201, await createFolder(root, await readJson(request)))
+      return
+    }
+    if (url.pathname === '/api/docs/folder' && method === 'PUT') {
+      sendJson(response, 200, await renameFolder(root, await readJson(request)))
+      return
+    }
+    if (url.pathname === '/api/docs/folder' && method === 'DELETE') {
+      sendJson(response, 200, await deleteFolder(root, await readJson(request)))
       return
     }
     if (url.pathname === '/api/docs/file' && method === 'POST') {

@@ -70,7 +70,7 @@ The file is git-ignored. Do not commit it.
 
 ## Features
 
-- Folder tree on the left; prompt list on the right; search/sort.
+- Folder tree on the left; create, rename, and delete empty folders; prompt list on the right; search/sort.
 - Markdown source / rich text / preview modes; rich editing is serialized back to Markdown.
 - Collapsible heading outline.
 - Debounced auto-save after about 1.2s idle; manual Save remains.
