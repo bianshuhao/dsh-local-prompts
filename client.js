@@ -2366,6 +2366,7 @@ ${e}
 
 .ld-root .table-wrap {
   margin: 1em 0;
+  padding: 1px 2px;
   overflow-x: auto;
 }
 
@@ -2375,7 +2376,7 @@ ${e}
   border: 1px solid color-mix(in srgb, var(--ld-text) 28%, transparent);
   border-radius: 8px;
   font-size: 13px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .ld-root .markdown-body thead {
@@ -3366,6 +3367,7 @@ ${e}
 
 .ld-root .ld-rich-editor .ld-tiptap .tableWrapper {
   margin: 14px 0;
+  padding: 1px 2px;
   overflow-x: auto;
 }
 
@@ -3376,7 +3378,7 @@ ${e}
   border: 1px solid color-mix(in srgb, var(--ld-text) 28%, transparent);
   border-radius: 8px;
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--ld-text) 18%, transparent);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .ld-root .ld-rich-editor .ld-tiptap th,
