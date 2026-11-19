@@ -21,6 +21,13 @@ export interface RichEditorLabels {
   orderedList: string
   blockquote: string
   codeBlock: string
+  table: string
+  tableActions: string
+  addRow: string
+  addColumn: string
+  deleteRow: string
+  deleteColumn: string
+  deleteTable: string
   undo: string
   redo: string
   reference: string
@@ -257,6 +264,7 @@ export const RichMarkdownEditor = forwardRef<RichEditorHandle, RichMarkdownEdito
       orderedList: current.isActive('orderedList'),
       blockquote: current.isActive('blockquote'),
       codeBlock: current.isActive('codeBlock'),
+      table: current.isActive('table'),
       canUndo: current.can().undo(),
       canRedo: current.can().redo(),
     } : null,
@@ -333,6 +341,7 @@ export const RichMarkdownEditor = forwardRef<RichEditorHandle, RichMarkdownEdito
         <ToolButton title={labels.orderedList} active={toolbar?.orderedList} onPress={() => editor.chain().focus().toggleOrderedList().run()}>1.</ToolButton>
         <ToolButton title={labels.blockquote} active={toolbar?.blockquote} onPress={() => editor.chain().focus().toggleBlockquote().run()}>❝</ToolButton>
         <ToolButton title={labels.codeBlock} active={toolbar?.codeBlock} onPress={() => editor.chain().focus().toggleCodeBlock().run()}>{'{ }'}</ToolButton>
+        <ToolButton title={labels.table} active={toolbar?.table} onPress={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>▦</ToolButton>
         <span className="ld-rich-sep" />
         <ToolButton title={labels.undo} disabled={!toolbar?.canUndo} onPress={undo}>↶</ToolButton>
         <ToolButton title={labels.redo} disabled={!toolbar?.canRedo} onPress={redo}>↷</ToolButton>
@@ -345,6 +354,16 @@ export const RichMarkdownEditor = forwardRef<RichEditorHandle, RichMarkdownEdito
           {labels.reference}
         </ToolButton>
       </div>
+      {toolbar?.table && (
+        <div className="ld-table-tools" role="toolbar" aria-label={labels.tableActions}>
+          <span className="ld-table-tools-label">{labels.tableActions}</span>
+          <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => editor.chain().focus().addRowAfter().run()}>{labels.addRow}</button>
+          <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => editor.chain().focus().addColumnAfter().run()}>{labels.addColumn}</button>
+          <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => editor.chain().focus().deleteRow().run()}>{labels.deleteRow}</button>
+          <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => editor.chain().focus().deleteColumn().run()}>{labels.deleteColumn}</button>
+          <button type="button" className="danger" onMouseDown={(event) => event.preventDefault()} onClick={() => editor.chain().focus().deleteTable().run()}>{labels.deleteTable}</button>
+        </div>
+      )}
       <input
         ref={fileInputRef}
         type="file"

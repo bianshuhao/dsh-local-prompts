@@ -3077,3 +3077,104 @@
 .ld-root .ld-inline-dir-select .ld-select-menu {
   max-width: 240px;
 }
+
+/* ---------- rich Markdown tables ---------- */
+
+.ld-root .ld-rich-editor .ld-tiptap .tableWrapper {
+  margin: 14px 0;
+  overflow-x: auto;
+}
+
+.ld-root .ld-rich-editor .ld-tiptap table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border: 1px solid var(--ld-border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ld-root .ld-rich-editor .ld-tiptap th,
+.ld-root .ld-rich-editor .ld-tiptap td {
+  position: relative;
+  min-width: 80px;
+  padding: 7px 9px;
+  border: 1px solid var(--ld-border);
+  background: var(--ld-surface);
+  text-align: left;
+  vertical-align: top;
+}
+
+.ld-root .ld-rich-editor .ld-tiptap th {
+  background: var(--ld-surface-soft);
+  color: var(--ld-text);
+  font-weight: 600;
+}
+
+.ld-root .ld-rich-editor .ld-tiptap th p,
+.ld-root .ld-rich-editor .ld-tiptap td p {
+  margin: 0;
+}
+
+.ld-root .ld-rich-editor .ld-tiptap .selectedCell::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: color-mix(in srgb, var(--ld-primary) 13%, transparent);
+  content: '';
+  pointer-events: none;
+}
+
+.ld-root .ld-rich-editor .ld-tiptap .column-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  bottom: -2px;
+  width: 4px;
+  background: var(--ld-primary);
+  pointer-events: none;
+}
+
+.ld-root .ld-rich-editor .ld-tiptap .resize-cursor {
+  cursor: col-resize;
+}
+
+.ld-root .ld-table-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--ld-border);
+  background: var(--ld-surface-soft);
+  color: var(--ld-faint);
+  font-size: 10px;
+}
+
+.ld-root .ld-table-tools-label {
+  margin-right: 4px;
+  color: var(--ld-muted);
+  font-weight: 600;
+}
+
+.ld-root .ld-table-tools button {
+  height: 23px;
+  padding: 0 6px;
+  border-radius: 4px;
+  color: var(--ld-muted);
+  font-size: 10px;
+}
+
+.ld-root .ld-table-tools button:hover {
+  background: var(--ld-hover);
+  color: var(--ld-text);
+}
+
+.ld-root .ld-table-tools button.danger {
+  color: var(--ld-danger);
+}
+
+.ld-root .ld-table-tools button.danger:hover {
+  background: color-mix(in srgb, var(--ld-danger) 10%, transparent);
+}
