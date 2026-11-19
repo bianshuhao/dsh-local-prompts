@@ -17,6 +17,8 @@ import { docDir, resolveAssetUrl } from './assetPath'
 
 import {
   ArrowLeftIcon,
+  CheckIcon,
+  ChevronDownIcon,
   CopyIcon,
   EyeIcon,
   FileIcon,
@@ -598,15 +600,21 @@ export function LocalDocsApp({ t }: AppProps) {
 
             {compact && (
               <div className="ld-compact-filter">
-                <select value={view} onChange={(event) => selectView(event.target.value)} aria-label="目录">
-                  <option value={ALL}>{tr(t, 'allDocs', '全部提示词')}</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                    {category.id === ROOT_CATEGORY_ID ? tr(t, 'root', '根目录') : category.name}
-                  </option>
-                  ))}
-                  <option value={TRASH}>{tr(t, 'trash', '回收站')}</option>
-                </select>
+                <SelectMenu
+                  className="ld-compact-select"
+                  value={view}
+                  onChange={selectView}
+                  ariaLabel={tr(t, 'directory', '目录')}
+                  options={[
+                    { value: ALL, label: tr(t, 'allDocs', '全部提示词'), icon: <GridIcon size={13} /> },
+                    ...categories.map((category) => ({
+                      value: category.id,
+                      label: categoryLabel(category),
+                      color: category.color,
+                    })),
+                    { value: TRASH, label: tr(t, 'trash', '回收站'), icon: <TrashIcon size={13} /> },
+                  ]}
+                />
                 <button
                   type="button"
                   className={`ld-icon-button${status === 'loading' ? ' is-spinning' : ''}`}
@@ -640,14 +648,21 @@ export function LocalDocsApp({ t }: AppProps) {
                   </button>
                 ) : null
               ) : (
-                <label className="ld-sort">
-                  <SortIcon size={13} />
-                  <select value={sort} onChange={(event) => setSort(event.target.value as SortKey)} aria-label="排序">
-                    <option value="updated">{tr(t, 'updatedSort', '最近更新')}</option>
-                    <option value="created">{tr(t, 'createdSort', '创建时间')}</option>
-                    <option value="title">{tr(t, 'titleSort', '标题')}</option>
-                  </select>
-                </label>
+                <div className="ld-sort">
+                  <SelectMenu
+                    className="ld-sort-select"
+                    value={sort}
+                    onChange={(value) => setSort(value as SortKey)}
+                    ariaLabel={tr(t, 'sortLabel', '排序')}
+                    leading={<SortIcon size={13} />}
+                    align="right"
+                    options={[
+                      { value: 'updated', label: tr(t, 'updatedSort', '最近更新') },
+                      { value: 'created', label: tr(t, 'createdSort', '创建时间') },
+                      { value: 'title', label: tr(t, 'titleSort', '标题') },
+                    ]}
+                  />
+                </div>
               )}
             </div>
 
@@ -1297,16 +1312,20 @@ function EditorPage({ t, prompt, categories, prompts, assets, defaultCategoryId,
                   {tr(t, 'previewTab', '预览')}
                 </button>
               </div>
-              <label className="ld-inline-dir">
+              <div className="ld-inline-dir">
                 <span>{tr(t, 'directory', '目录')}</span>
-                <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.id === ROOT_CATEGORY_ID ? tr(t, 'root', '根目录') : category.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <SelectMenu
+                  className="ld-inline-dir-select"
+                  value={categoryId}
+                  onChange={setCategoryId}
+                  ariaLabel={tr(t, 'directory', '目录')}
+                  options={categories.map((category) => ({
+                    value: category.id,
+                    label: category.id === ROOT_CATEGORY_ID ? tr(t, 'root', '根目录') : category.name,
+                    color: category.color,
+                  }))}
+                />
+              </div>
             </div>
             <div className="ld-content-options">
               {tab === 'source' && (
@@ -1556,6 +1575,125 @@ function LocalDialog({ t, root, status, error, categoryCount, promptCount, trash
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+interface SelectOption {
+  value: string
+  label: string
+  color?: string
+  icon?: ReactNode
+}
+
+interface SelectMenuProps {
+  value: string
+  options: SelectOption[]
+  onChange: (value: string) => void
+  ariaLabel: string
+  className?: string
+  align?: 'left' | 'right'
+  leading?: ReactNode
+}
+
+function SelectMenu({ value, options, onChange, ariaLabel, className, align = 'left', leading }: SelectMenuProps) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const selected = options.find((option) => option.value === value) ?? options[0]
+
+  useEffect(() => {
+    if (!open) return
+    const closeOnOutside = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation()
+        setOpen(false)
+        triggerRef.current?.focus()
+      }
+    }
+    document.addEventListener('mousedown', closeOnOutside)
+    document.addEventListener('keydown', closeOnEscape)
+    const selectedButton = menuRef.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]')
+    ;(selectedButton ?? menuRef.current?.querySelector<HTMLButtonElement>('.ld-select-option'))?.focus()
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutside)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [open])
+
+  const focusOption = (index: number) => {
+    const buttons = menuRef.current?.querySelectorAll<HTMLButtonElement>('.ld-select-option')
+    if (!buttons?.length) return
+    const next = (index + buttons.length) % buttons.length
+    buttons[next]?.focus()
+  }
+
+  return (
+    <div className={`ld-select ${className ?? ''}`} ref={rootRef}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="ld-select-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={ariaLabel}
+        onClick={() => setOpen((current) => !current)}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault()
+            setOpen(true)
+          }
+        }}
+      >
+        {selected?.color
+          ? <span className="ld-select-dot" style={{ background: selected.color }} />
+          : (selected?.icon ?? leading)}
+        <span className="ld-select-label">{selected?.label ?? '—'}</span>
+        <ChevronDownIcon size={12} />
+      </button>
+      {open && (
+        <div ref={menuRef} className={`ld-select-menu${align === 'right' ? ' align-right' : ''}`} role="listbox" aria-label={ariaLabel}>
+          {options.map((option, index) => (
+            <button
+              key={option.value}
+              type="button"
+              role="option"
+              aria-selected={option.value === value}
+              className="ld-select-option"
+              onClick={() => {
+                onChange(option.value)
+                setOpen(false)
+                triggerRef.current?.focus()
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'ArrowDown') {
+                  event.preventDefault()
+                  focusOption(index + 1)
+                } else if (event.key === 'ArrowUp') {
+                  event.preventDefault()
+                  focusOption(index - 1)
+                } else if (event.key === 'Home') {
+                  event.preventDefault()
+                  focusOption(0)
+                } else if (event.key === 'End') {
+                  event.preventDefault()
+                  focusOption(options.length - 1)
+                }
+              }}
+            >
+              <span className="ld-select-option-mark">
+                {option.color ? <span className="ld-select-dot" style={{ background: option.color }} /> : option.icon}
+              </span>
+              <span className="ld-select-option-label">{option.label}</span>
+              {option.value === value && <CheckIcon size={12} />}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

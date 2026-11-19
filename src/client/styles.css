@@ -2904,3 +2904,177 @@
 .ld-root .ld-editor-pane.has-toc-button .ld-preview {
   padding-left: 50px;
 }
+
+/* ---------- unified select menus ---------- */
+
+.ld-root .ld-select {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
+.ld-root .ld-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  min-width: 0;
+  padding: 0 8px;
+  border: 1px solid var(--ld-border-strong);
+  border-radius: 6px;
+  outline: none;
+  background: var(--ld-surface);
+  color: var(--ld-text);
+  font-size: 11px;
+  text-align: left;
+  transition: border-color 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+}
+
+.ld-root .ld-select-trigger:hover {
+  border-color: var(--ld-border-strong);
+  background: var(--ld-hover);
+}
+
+.ld-root .ld-select-trigger:focus-visible {
+  border-color: var(--ld-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ld-primary) 12%, transparent);
+}
+
+.ld-root .ld-select-trigger > svg:last-child {
+  flex-shrink: 0;
+  color: var(--ld-faint);
+}
+
+.ld-root .ld-select-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ld-root .ld-select-dot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.ld-root .ld-select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 90;
+  min-width: 100%;
+  max-width: 260px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--ld-border-strong);
+  border-radius: 8px;
+  background: var(--ld-surface);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--ld-text) 14%, transparent);
+}
+
+.ld-root .ld-select-menu.align-right {
+  right: 0;
+  left: auto;
+}
+
+.ld-root .ld-select-option {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 7px;
+  border-radius: 5px;
+  color: var(--ld-text);
+  font-size: 11.5px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ld-root .ld-select-option:hover,
+.ld-root .ld-select-option:focus-visible {
+  outline: none;
+  background: var(--ld-hover);
+}
+
+.ld-root .ld-select-option[aria-selected="true"] {
+  background: var(--ld-selected);
+  color: var(--ld-primary);
+}
+
+.ld-root .ld-select-option-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  flex-shrink: 0;
+  color: var(--ld-faint);
+}
+
+.ld-root .ld-select-option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ld-root .ld-select-option > svg:last-child {
+  flex-shrink: 0;
+  color: var(--ld-primary);
+}
+
+.ld-root .ld-compact-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.ld-root .ld-compact-select .ld-select-trigger {
+  width: 100%;
+  height: 34px;
+  padding: 0 9px;
+  border-color: var(--ld-border-strong);
+  border-radius: 7px;
+  font-size: 12.5px;
+}
+
+.ld-root .ld-compact-select .ld-select-menu {
+  right: 0;
+  left: 0;
+  max-width: none;
+}
+
+.ld-root .ld-sort-select .ld-select-trigger {
+  height: 26px;
+  padding: 2px 2px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ld-muted);
+  font-size: 11px;
+}
+
+.ld-root .ld-sort-select .ld-select-trigger:hover {
+  border-color: transparent;
+  background: var(--ld-hover);
+  color: var(--ld-text);
+}
+
+.ld-root .ld-inline-dir-select {
+  max-width: 150px;
+}
+
+.ld-root .ld-inline-dir-select .ld-select-trigger {
+  height: 26px;
+  max-width: 150px;
+  padding: 0 6px;
+  border-color: var(--ld-border);
+  border-radius: 5px;
+  font-size: 10.5px;
+}
+
+.ld-root .ld-inline-dir-select .ld-select-menu {
+  max-width: 240px;
+}

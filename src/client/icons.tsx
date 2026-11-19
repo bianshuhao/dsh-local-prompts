@@ -166,3 +166,19 @@ export function TocIcon(props: IconProps) {
     </Svg>
   )
 }
+
+export function ChevronDownIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m6 9 6 6 6-6" />
+    </Svg>
+  )
+}
+
+export function CheckIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m5 12 4 4L19 6" />
+    </Svg>
+  )
+}
