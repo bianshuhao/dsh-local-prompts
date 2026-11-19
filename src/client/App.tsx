@@ -1265,18 +1265,6 @@ function EditorPage({ t, prompt, categories, prompts, assets, defaultCategoryId,
           )}
           <div className="ld-editor-content-head">
             <div className="ld-editor-head-left">
-              {toc.length > 0 && (
-                <button
-                  type="button"
-                  className={`ld-toc-icon-button${tocOpen ? ' is-active' : ''}`}
-                  title={tocOpen ? tr(t, 'closeToc', '收起目录') : tr(t, 'openToc', '打开目录')}
-                  aria-label={tocOpen ? tr(t, 'closeToc', '收起目录') : tr(t, 'openToc', '打开目录')}
-                  aria-pressed={tocOpen}
-                  onClick={() => setTocOpen((value) => !value)}
-                >
-                  <TocIcon size={15} />
-                </button>
-              )}
               <div className="ld-tabs" role="tablist">
                 <button
                   type="button"
@@ -1360,7 +1348,7 @@ function EditorPage({ t, prompt, categories, prompts, assets, defaultCategoryId,
                 onClose={() => setTocOpen(false)}
               />
             )}
-            <div className="ld-editor-pane">
+            <div className={`ld-editor-pane${toc.length > 0 && !tocOpen ? ' has-toc-button' : ''}`}>
               {tab === 'source' ? (
                 <MarkdownEditor
                   ref={sourceEditorRef}
@@ -1414,6 +1402,17 @@ function EditorPage({ t, prompt, categories, prompts, assets, defaultCategoryId,
                     resolveImage={(src) => resolveAssetUrl(src, docDir(prompt?.filePath, categoryId))}
                   />
                 </div>
+              )}
+              {toc.length > 0 && !tocOpen && (
+                <button
+                  type="button"
+                  className="ld-toc-float"
+                  title={tr(t, 'openToc', '打开目录')}
+                  aria-label={tr(t, 'openToc', '打开目录')}
+                  onClick={() => setTocOpen(true)}
+                >
+                  <TocIcon size={15} />
+                </button>
               )}
             </div>
           </div>
