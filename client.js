@@ -3153,7 +3153,7 @@ ${e}
 .ld-root .ld-toc-float {
   position: absolute;
   left: 8px;
-  top: 50%;
+  top: 48px;
   z-index: 8;
   display: inline-flex;
   align-items: center;
@@ -3165,7 +3165,6 @@ ${e}
   background: var(--ld-surface);
   color: var(--ld-muted);
   box-shadow: 0 4px 14px color-mix(in srgb, var(--ld-text) 12%, transparent);
-  transform: translateY(-50%);
 }
 
 .ld-root .ld-toc-float:hover {
