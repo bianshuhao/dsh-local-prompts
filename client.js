@@ -2372,17 +2372,20 @@ ${e}
 .ld-root .markdown-body table {
   width: 100%;
   border-collapse: collapse;
+  border: 1px solid color-mix(in srgb, var(--ld-text) 28%, transparent);
+  border-radius: 8px;
   font-size: 13px;
+  overflow: hidden;
 }
 
 .ld-root .markdown-body thead {
-  background: var(--surface-soft);
+  background: var(--ld-hover);
 }
 
 .ld-root .markdown-body th,
 .ld-root .markdown-body td {
   padding: 8px 11px;
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--ld-text) 20%, transparent);
   text-align: left;
   vertical-align: top;
 }
@@ -3370,8 +3373,9 @@ ${e}
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  border: 1px solid var(--ld-border-strong);
+  border: 1px solid color-mix(in srgb, var(--ld-text) 28%, transparent);
   border-radius: 8px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ld-text) 18%, transparent);
   overflow: hidden;
 }
 
@@ -3380,14 +3384,14 @@ ${e}
   position: relative;
   min-width: 80px;
   padding: 7px 9px;
-  border: 1px solid var(--ld-border);
+  border: 1px solid color-mix(in srgb, var(--ld-text) 20%, transparent);
   background: var(--ld-surface);
   text-align: left;
   vertical-align: top;
 }
 
 .ld-root .ld-rich-editor .ld-tiptap th {
-  background: var(--ld-surface-soft);
+  background: var(--ld-hover);
   color: var(--ld-text);
   font-weight: 600;
 }
